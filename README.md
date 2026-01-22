@@ -3,6 +3,8 @@
 # Easy Install:
 **https://github.com/dontcrossconnor/tor-mass-downloader-with-recursion/releases/tag/v1.0.0**
 
+----------
+
 A **Tor Browser** (Firefox-based) extension for **mass recursive file downloading** with speed tuning, resume, retry, and filters. All logic lives in `tor-recursive2/`; the rest of the repo is untouched.
 
 ## Features
