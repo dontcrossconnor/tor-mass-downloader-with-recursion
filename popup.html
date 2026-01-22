@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tor Mass Recursive Downloader</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { min-width: 560px; width: 560px; min-height: 500px; max-height: 90vh; padding: 12px; font-family: system-ui, 'Segoe UI', sans-serif; font-size: 13px; margin: 0; overflow: auto; resize: both; }
+    h2 { margin: 0 0 10px 0; font-size: 16px; color: #1a1a2e; }
+    .card { margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef; }
+    .card-title { font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 12px; text-transform: uppercase; }
+    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    button { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 500; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-scan { background: #4361ee; color: #fff; }
+    .btn-recursive { background: #7b2cbf; color: #fff; }
+    .btn-dl { background: #2d6a4f; color: #fff; }
+    .btn-pause { background: #f77f00; color: #fff; }
+    .btn-resume { background: #2d6a4f; color: #fff; }
+    .btn-retry { background: #9d4edd; color: #fff; }
+    .btn-clear { background: #e63946; color: #fff; }
+    .btn-reset { background: #6c757d; color: #fff; }
+    .btn-opt { background: #495057; color: #fff; }
+    .btn-use-page { background: #6c757d; color: #fff; font-size: 11px; padding: 6px 10px; }
+    .btn-stop-scan { background: #e63946; color: #fff; }
+    .status { padding: 8px 10px; border-radius: 5px; margin-bottom: 10px; font-size: 12px; }
+    .status.idle { background: #e9ecef; color: #495057; }
+    .status.run { background: #cce5ff; color: #004085; }
+    .status.done { background: #d4edda; color: #155724; }
+    .status.err { background: #f8d7da; color: #721c24; }
+    .progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .prog-item { padding: 6px; background: #fff; border-radius: 4px; text-align: center; font-size: 11px; }
+    .prog-item .v { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .prog-item .l { color: #6c757d; }
+    .filters { display: none; }
+    .filters.show { display: block; }
+    .frow { margin: 6px 0; }
+    .frow label { display: block; margin-bottom: 2px; font-size: 11px; color: #495057; }
+    .frow input, .frow select { width: 100%; padding: 6px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; }
+    .chk { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+    .chk input { width: auto; margin: 0; }
+    .speed { margin: 6px 0; }
+    .speed input[type=range] { width: 100%; }
+    .speed-lbl { font-size: 11px; color: #6c757d; }
+    .help-text { font-size: 11px; color: #6c757d; margin-top: 4px; }
+    input[type=url] { font-family: inherit; }
+    .file-list { max-height: 220px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; background: #fff; margin: 6px 0; }
+    .file-row { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-bottom: 1px solid #f1f3f4; font-size: 11px; }
+    .file-row:last-child { border-bottom: none; }
+    .file-row input[type=checkbox] { flex-shrink: 0; }
+    .file-row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-row .size { flex-shrink: 0; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <h2>Tor Mass Recursive Downloader</h2>
+  <div class="status idle" id="status">Ready</div>
+
+  <div class="card">
+    <div class="card-title">Scan</div>
+    <div class="btn-row">
+      <button id="btnScan" class="btn-scan">Scan page</button>
+    </div>
+    <div class="frow" style="margin-top:8px;">
+      <label>Recursive from URL</label>
+      <div class="btn-row" style="align-items:center; gap:6px;">
+        <input type="url" id="recursiveUrl" placeholder="https://example.onion/path/" style="flex:1; min-width:0;">
+        <button id="btnUsePage" class="btn-use-page" type="button">Use current page</button>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:6px;">
+      <button id="btnStartRecursive" class="btn-recursive" disabled>▶ Start recursive scan</button>
+      <button id="btnStopScan" class="btn-stop-scan" disabled>⏹ Stop scan</button>
+    </div>
+    <div class="help-text" id="recursiveHelp">Scans fill the list below. Select files and click Start downloads. No auto-download.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Discovered files</div>
+    <div class="btn-row">
+      <button id="btnSelectAll" class="btn-reset">Select all</button>
+      <button id="btnDeselectAll" class="btn-reset">Deselect all</button>
+      <button id="btnClearList" class="btn-clear">Clear list</button>
+      <button id="btnStartDownloads" class="btn-dl" disabled>Start downloads</button>
+    </div>
+    <div class="file-list" id="discoveredList"></div>
+    <div class="help-text" id="discoveredSummary">No files. Use Scan page or Recursive scan.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Speed</div>
+    <div class="speed">
+      <span class="speed-lbl">Concurrent: <span id="concurrentVal">4</span></span>
+      <input type="range" id="concurrent" min="1" max="8" value="4">
+    </div>
+    <div class="chk">
+      <input type="checkbox" id="autoRetry" checked>
+      <label for="autoRetry">Auto-retry failed</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Queue</div>
+    <div class="btn-row">
+      <button id="btnPause" class="btn-pause" disabled>Pause</button>
+      <button id="btnResume" class="btn-resume" disabled>Resume</button>
+      <button id="btnRetry" class="btn-retry" disabled>Retry failed</button>
+      <button id="btnClear" class="btn-clear">Clear queue</button>
+      <button id="btnReset" class="btn-reset">Reset all</button>
+      <button id="btnOpt" class="btn-opt">Options</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Progress</div>
+    <div class="progress">
+      <div class="prog-item"><span class="l">Queued</span><br><span class="v" id="vQueued">0</span></div>
+      <div class="prog-item"><span class="l">Done</span><br><span class="v" id="vDone">0</span></div>
+      <div class="prog-item"><span class="l">Failed</span><br><span class="v" id="vFailed">0</span></div>
+      <div class="prog-item"><span class="l">State</span><br><span class="v" id="vState">Idle</span></div>
+      <div class="prog-item" id="scanProgressRow" style="grid-column:1/-1; display:none;"><span class="l">Scan</span>: <span id="vScan">0</span> files</div>
+    </div>
+  </div>
+
+  <div class="card filters" id="filters">
+    <div class="card-title">Filters</div>
+    <div class="frow">
+      <label>Include extensions (comma, empty=all)</label>
+      <input type="text" id="incExt" placeholder="pdf, zip, txt">
+    </div>
+    <div class="frow">
+      <label>Exclude extensions</label>
+      <input type="text" id="excExt" placeholder="exe, bat">
+    </div>
+    <div class="frow">
+      <label>Min size (MB, 0=any)</label>
+      <input type="number" id="minSz" min="0" step="0.1" value="0">
+    </div>
+    <div class="frow">
+      <label>Max size (MB, 0=any)</label>
+      <input type="number" id="maxSz" min="0" step="0.1" value="0">
+    </div>
+    <div class="frow">
+      <label>Include name pattern (regex)</label>
+      <input type="text" id="incPat" placeholder="">
+    </div>
+    <div class="frow">
+      <label>Exclude name pattern (regex)</label>
+      <input type="text" id="excPat" placeholder="">
+    </div>
+    <div class="chk">
+      <input type="checkbox" id="enableF">
+      <label for="enableF">Enable filters</label>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

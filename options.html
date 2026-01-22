@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tor Mass Recursive Downloader – Options</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { max-width: 560px; padding: 20px; font-family: system-ui, sans-serif; font-size: 14px; }
+    h2 { margin-top: 0; }
+    .opt { margin: 14px 0; padding: 12px; background: #f5f5f5; border-radius: 6px; }
+    .opt label { display: block; font-weight: 600; margin-bottom: 4px; }
+    .opt input, .opt select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .opt .hint { font-size: 12px; color: #555; margin-top: 4px; }
+    .chk { display: flex; align-items: center; gap: 8px; }
+    .chk input { width: auto; }
+    .btns { margin-top: 20px; display: flex; gap: 10px; }
+    button { padding: 10px 18px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+    #save { background: #2d6a4f; color: #fff; }
+    #cancel { background: #6c757d; color: #fff; }
+  </style>
+</head>
+<body>
+  <h2>Tor Mass Recursive Downloader – Options</h2>
+
+  <div class="opt">
+    <label>Save path (relative to Downloads)</label>
+    <input type="text" id="savePath" placeholder="tor-downloads/">
+    <div class="hint">Subfolder where files are saved, e.g. tor-downloads/ or site-name/</div>
+  </div>
+
+  <div class="opt">
+    <label>Max concurrent downloads (1–8)</label>
+    <input type="number" id="maxConcurrent" min="1" max="8" value="4">
+    <div class="hint">Higher = faster, but can overload Tor. 4 is a good balance.</div>
+  </div>
+
+  <div class="opt">
+    <label>Delay between starting downloads (ms)</label>
+    <input type="number" id="delayStarts" min="0" max="5000" step="50" value="200">
+    <div class="hint">Small delay reduces connection spikes. 0 = max speed, 200–500 is safer for Tor.</div>
+  </div>
+
+  <div class="opt">
+    <label>Delay between directory scans (ms)</label>
+    <input type="number" id="delayScans" min="100" max="10000" step="100" value="800">
+    <div class="hint">Pause before opening each new directory. Keeps Tor load steady.</div>
+  </div>
+
+  <div class="opt">
+    <label>Max retries per file</label>
+    <input type="number" id="maxRetries" min="0" max="20" value="5">
+    <div class="hint">Retries with backoff. 0 = no retries.</div>
+  </div>
+
+  <div class="opt">
+    <label>Retry delay base (ms)</label>
+    <input type="number" id="retryBase" min="500" max="10000" step="100" value="1500">
+    <div class="hint">First retry after this delay; later retries use exponential backoff.</div>
+  </div>
+
+  <div class="opt">
+    <div class="chk">
+      <input type="checkbox" id="resumeInterrupted" checked>
+      <label for="resumeInterrupted">Resume interrupted downloads</label>
+    </div>
+    <div class="hint">Use browser’s resume when a download was interrupted (network, restart).</div>
+  </div>
+
+  <div class="opt">
+    <div class="chk">
+      <input type="checkbox" id="autoNavigateSubdirs" checked>
+      <label for="autoNavigateSubdirs">Auto-navigate subdirectories (recursion)</label>
+    </div>
+    <div class="hint">Follow directory links when doing a recursive scan.</div>
+  </div>
+
+  <div class="opt">
+    <label>Max recursion depth</label>
+    <input type="number" id="maxDepth" min="1" max="100" value="20">
+    <div class="hint">How deep to follow directory links. Prevents runaway on circular links.</div>
+  </div>
+
+  <div class="opt">
+    <label>Conflict action</label>
+    <select id="conflictAction">
+      <option value="uniquify">Uniquify (add (1), (2)...)</option>
+      <option value="overwrite">Overwrite</option>
+      <option value="prompt">Prompt</option>
+    </select>
+    <div class="hint">When a file with the same name already exists.</div>
+  </div>
+
+  <div class="opt">
+    <div class="chk">
+      <input type="checkbox" id="showNotifications" checked>
+      <label for="showNotifications">Desktop notifications when a batch finishes</label>
+    </div>
+  </div>
+
+  <div class="opt">
+    <label>Parallel chunks per file (single-file speed)</label>
+    <select id="parallelChunks">
+      <option value="0">Off (one connection per file)</option>
+      <option value="2">2</option>
+      <option value="4">4</option>
+      <option value="8">8</option>
+    </select>
+    <div class="hint">Split one file into N range requests in parallel. Only if the server sends Accept-Ranges. 0 = disabled.</div>
+  </div>
+
+  <div class="opt">
+    <label>Max file size for chunking (MB)</label>
+    <input type="number" id="parallelChunksMaxSizeMB" min="1" max="10240" value="8192">
+    <div class="hint">Larger files use normal download to avoid high memory use. Only applies when chunking is on.</div>
+  </div>
+
+  <div class="btns">
+    <button id="save">Save</button>
+    <button id="cancel">Cancel</button>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

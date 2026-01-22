@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "Tor Mass Recursive Downloader",
+  "version": "1.0.0",
+  "description": "Mass recursive file downloader for Tor: resume failed downloads, speed tuning, filters, and full control.",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "storage",
+    "tabs",
+    "notifications",
+    "<all_urls>"
+  ],
+  "browser_action": {
+    "default_title": "Tor Mass Recursive Downloader",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+  "icons": {
+    "48": "icon48.png"
+  },
+  "applications": {
+    "gecko": {
+      "id": "tor-mass-recursive-dl@local",
+      "strict_min_version": "78.0"
+    }
+  }
+}
